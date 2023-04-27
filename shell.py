@@ -14,5 +14,3 @@ def shell(input):
 		except:
 			return "Invalid command."
 	return str(os.getcwd())
-
-shell("ls")

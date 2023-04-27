@@ -4,6 +4,7 @@ from textual.widgets import Button, Header, Footer, Static, TextLog, Input, Labe
 from textual.widget import Widget
 from textual import events
 from textual.reactive import reactive
+from textual.message_pump import MessagePump
 
 import os
 from shell import shell
@@ -26,26 +27,31 @@ class Prompt(Widget):
 
 class SysInfo(Widget):
     cpu = reactive(1.0)
+    memory = reactive(1000)
+
+    retval = reactive("")
 
     def fetchinfo(self):
         self.cpu+=1.0
 
-    def compose(self):
-        retval = ""
-        retval+=str(self.cpu)+" gHz\n"
+    def on_mount(self):
+        self.set_interval(1.0,self.fetchinfo)
 
-        return "hihihi"
+    def comp(self):
+        self.retval = "System info:\n"
+        self.retval+=str(self.cpu)+" gHz\n"
+        self.retval+=str(self.memory)+" MB    \n"
 
     def render(self) -> str:
-        self.fetchinfo()
-        return str(self.compose())
+        self.comp()
+        return self.retval
 
 class PyTerm(App):
     CSS_PATH="styles.css"
     current = reactive("hello")
     cwd = reactive(os.getcwd())
     _in = Input()
-    sysinfo = SysInfo()
+    sysinfo = SysInfo(id="sys")
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -69,6 +75,8 @@ class PyTerm(App):
 
     def on_mount(self):
         self._in.focus()
+
+    
 
 app = PyTerm()
 app.run()
