@@ -1,6 +1,7 @@
 Input {
     dock: bottom;
     margin-top: 1;
+    border: ascii;
 }
 
 Prompt {

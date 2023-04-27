@@ -28,7 +28,7 @@ class PyTerm(App):
         yield Header(show_clock=True)
         yield Footer()
         yield Prompt()
-        yield self.in_w
+        yield Input()
 
     def on_input_submitted(self,event:Input.Submitted) -> None:
         event.input.action_delete_left_all()
