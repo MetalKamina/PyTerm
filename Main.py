@@ -24,15 +24,33 @@ class Prompt(Widget):
         self.to_return = shell_parse(self._input)
         return self.to_return
 
+class SysInfo(Widget):
+    cpu = reactive(1.0)
+
+    def fetchinfo(self):
+        self.cpu+=1.0
+
+    def compose(self):
+        retval = ""
+        retval+=str(self.cpu)+" gHz\n"
+
+        return "hihihi"
+
+    def render(self) -> str:
+        self.fetchinfo()
+        return str(self.compose())
+
 class PyTerm(App):
     CSS_PATH="styles.css"
     current = reactive("hello")
     cwd = reactive(os.getcwd())
     _in = Input()
+    sysinfo = SysInfo()
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         yield Footer()
+        yield self.sysinfo
         with ContentSwitcher(initial="prompt"):
             yield Prompt(id="prompt")
             yield DirectoryTree(path=self.cwd,id="dtree")
