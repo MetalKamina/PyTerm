@@ -1,4 +1,4 @@
-from textual.app import App, ComposeResult
+from textual.app import App, ComposeResult, Binding
 from textual.containers import Container
 from textual.widgets import Button, Header, Footer, Static, TextLog, Input, Label, DirectoryTree, ContentSwitcher
 from textual.widget import Widget
@@ -23,33 +23,34 @@ class Prompt(Widget):
     def render(self) -> str:
         self.to_return = shell_parse(self._input)
         return self.to_return
-    
+
 class PyTerm(App):
     CSS_PATH="styles.css"
     current = reactive("hello")
-    in_w = Input()
     cwd = reactive(os.getcwd())
+    _in = Input()
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         yield Footer()
         with ContentSwitcher(initial="prompt"):
             yield Prompt(id="prompt")
-            yield DirectoryTree(self.cwd,id="dtree")
-        yield Input()
+            yield DirectoryTree(path=self.cwd,id="dtree")
+        yield self._in
 
     def on_input_submitted(self,event:Input.Submitted) -> None:
-        if(event.value == ":q"):
+        if(event.value == ":q" or event.value == "exit"):
                 self.exit()
-        if(event.value[:2] == "ls"):
-            self.cwd = os.getcwd()
-            self.query_one(ContentSwitcher).current = "dtree"
+        # if(event.value[:2] == "ls"):
+        #     self.cwd = os.getcwd()
+        #     self.query_one(ContentSwitcher).current = "dtree"
         else:
             self.query_one(ContentSwitcher).current = "prompt"
+            self.query_one(Prompt)._input = event.value
         event.input.action_delete_left_all()
-        self.query_one(Prompt)._input = event.value
-    #def on_key(self, event: events.Key) -> None:
-    #    self.query_one(TextLog).write(event)
+
+    def on_mount(self):
+        self._in.focus()
 
 app = PyTerm()
 app.run()

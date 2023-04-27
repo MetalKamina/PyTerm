@@ -1,3 +1,7 @@
+Screen {
+    align: center middle;
+}
+
 Input {
     dock: bottom;
     margin-top: 1;
@@ -10,11 +14,6 @@ Prompt {
 }
 
 DirectoryTree {
-    height: 100%;
-    content-align: center middle;
-}
-
-ContentSwitcher {
-    height: 100%;
-    content-align: center middle;
+    width:25%;
+    height:50%;
 }

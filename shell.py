@@ -9,5 +9,10 @@ def shell(input):
 		except:
 			return "Directory not found."
 	if(in_args[0] == "ls"):
-		return subprocess.check_output(input,shell=True).decode("utf-8")
+		try:
+			return subprocess.check_output(input,shell=True).decode("utf-8")
+		except:
+			return "Invalid command."
 	return str(os.getcwd())
+
+shell("ls")
