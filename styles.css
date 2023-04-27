@@ -8,3 +8,13 @@ Prompt {
     height: 100%;
     content-align: center middle;
 }
+
+DirectoryTree {
+    height: 100%;
+    content-align: center middle;
+}
+
+ContentSwitcher {
+    height: 100%;
+    content-align: center middle;
+}
