@@ -13,19 +13,20 @@ def shell(input):
 
 class Prompt(Widget):
     _input = reactive("")
-    to_return = reactive("asdf",layout=True) 
+    to_return = reactive("asdf",layout=False) 
 
     def render(self) -> str:
         self.to_return = shell(self._input)
         return self.to_return
     
 class PyTerm(App):
+    CSS_PATH="styles.css"
     current = reactive("hello")
     in_w = Input()
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        #yield Footer()
+        yield Footer()
         yield Prompt()
         yield self.in_w
 

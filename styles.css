@@ -1,0 +1,9 @@
+Input {
+    dock: bottom;
+    margin-top: 1;
+}
+
+Prompt {
+    height: 100%;
+    content-align: center middle;
+}
