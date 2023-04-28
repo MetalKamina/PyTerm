@@ -3,14 +3,10 @@ import subprocess
 
 def shell(input):
 	in_args = input.split(" ")
-	if(in_args[0] == "cd" and len(in_args) > 1):
-		try:
-			os.chdir(in_args[1])
-		except:
-			return "Directory not found."
-	if(in_args[0] == "ls"):
-		try:
-			return subprocess.check_output(input,shell=True).decode("utf-8")
-		except:
-			return "Invalid command."
+#	if(in_args[0] == "ls"):
+	try:
+		proc = subprocess.Popen(in_args,stdout=subprocess.PIPE)
+		return proc.stdout.read().decode("utf-8")
+	except Exception as e:
+		return str(e)
 	return str(os.getcwd())

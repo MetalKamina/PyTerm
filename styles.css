@@ -1,5 +1,6 @@
 Screen {
-    align: center middle;
+    layout:grid;
+    grid-size: 2 2;
 }
 
 Input {
@@ -8,16 +9,20 @@ Input {
     border: ascii;
 }
 
-Prompt {
-    height: 100%;
-    content-align: center middle;
+ContentSwitcher {
+    border: solid green;
 }
 
-DirectoryTree {
-    width:25%;
-    height:50%;
+Prompt {
+    /*height: 20%;
+    dock: bottom;*/
+    /*content-align: center middle;*/
+    border: solid green;
+    column-span: 2;
 }
 
 SysInfo {
-    height:50%;
+    /*height:50%;
+    width:50%;*/
+    border: solid green;
 }
