@@ -1,3 +1,4 @@
+
 from textual.app import App, ComposeResult, Binding
 from textual.containers import Container, Center
 from textual.widgets import Button, Header, Footer, Static, TextLog, Input, Label, DirectoryTree, ContentSwitcher
@@ -99,9 +100,22 @@ class SysInfo(Widget):
         return self.retval
 
 class Logo(Widget):
-    string = reactive("")
+    kitty = r"""                         .-.
+                          \ \
+                           \ \
+                            | |
+                            | |
+          /\---/\   _,---._ | |
+         /^   ^  \,'       `. ;
+        ( O   O   )  PyTerm   ;
+         `.=o=__,'            \
+           /         _,--.__   \
+          /  _ )   ,'   `-. `-. \
+         / ,' /  ,'        \ \ \ \
+        / /  / ,'          (,_)(,_)
+       (,;  (,,)"""
     def render(self) -> str:
-        return self.string
+        return self.kitty
 
 class Snow(Widget):
     posx = reactive([])
@@ -111,7 +125,7 @@ class Snow(Widget):
     def update(self):
         try:
             if(random.randint(0,1)):
-                if(len(self.posx) < 10):
+                if(len(self.posx) < 15):
                     self.posx.append(random.randint(0,self.container_size[0]-1))
                     self.posy.append(0)
             i = 0
@@ -142,6 +156,46 @@ class Snow(Widget):
     def render(self) -> str:
         return self.retval
 
+
+class Rain(Widget):
+    posx = reactive([])
+    posy = reactive([])
+    retval = reactive("")
+
+    def update(self):
+        try:
+            if(1):
+                if(len(self.posx) < 300):
+                    self.posx.append(random.randint(0,self.container_size[0]-1))
+                    self.posy.append(0)
+            i = 0
+            while(i < len(self.posx)):
+                self.posy[i]+=1
+                if(self.posy[i] == self.container_size[1]):
+                    self.posx.pop(i)
+                    self.posy.pop(i)
+                    i-=1
+                i+=1
+
+            self.retval = ""
+            for i in range(self.container_size[1]):
+                tmp = " "*(self.container_size[0])
+                if(i in self.posy):
+                    xind = self.posx[self.posy.index(i)]
+                    tmp = [x for x in tmp]
+                    tmp[xind] = "."
+                    tmp = "".join(tmp)
+                tmp+="\n"
+                self.retval+=tmp
+        except:
+            pass
+
+    def on_mount(self):
+        self.set_interval(.04,self.update)
+
+    def render(self) -> str:
+        return self.retval
+
 class FileTree(Widget):
     filetree = reactive(DirectoryTree(os.getcwd()))
 
@@ -167,14 +221,18 @@ class PyTerm(App):
     switcher2 = ContentSwitcher(initial=settings["default_widgets"][1])
     tree = Container(DirectoryTree(os.getcwd()),id="filetree")
     snow = Snow(id="snow")
+    rain = Rain(id="rain")
+    kitty = Logo(id="kitty")
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         with self.switcher1:
             yield self.snow
+            yield self.rain
             yield self.sysinfo
         with self.switcher2:
             yield self.tree
+            yield self.kitty
         yield self.prompt
         yield self._in
 
@@ -210,7 +268,7 @@ class PyTerm(App):
             except:
                 self.prompt.to_return = "Error: color not found."
         elif(e_arr[0] == "content"):
-            contents = ["filetree","snow","sys"]
+            contents = ["filetree","snow","rain","sys","kitty"]
             try:
                 if(e_arr[2] in contents):
                     num = int(e_arr[1])
