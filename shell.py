@@ -2,8 +2,9 @@ import os
 import subprocess
 
 def shell(input):
+	if(input == ""):
+		return str(os.getcwd())
 	in_args = input.split(" ")
-#	if(in_args[0] == "ls"):
 	try:
 		proc = subprocess.Popen(in_args,stdout=subprocess.PIPE)
 		return proc.stdout.read().decode("utf-8")

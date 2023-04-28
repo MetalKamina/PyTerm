@@ -151,11 +151,15 @@ class PyTerm(App):
             except:
                 self.prompt.to_return = "Error: color not found."
         elif(e_arr[0] == "border"):
-            try:
-                self._in.styles.border = (e_arr[1],self._in.styles.border[1])
-                self.settings["border"] = e_arr[1]
-            except:
-                self.prompt.to_return = "Error: border style not found."
+            options = ["ascii","blank","dashed","double","heavy","hidden/none","hkey",
+                "inner","outer","round","solid","tall","thick","vkey","wide"]
+            if(e_arr[1] == ""):
+               self.prompt.to_return = "Available borders styles: "+", ".join(options)+"."
+            else:
+                if(e_arr[1] in options):
+                    self.settings["border"] = e_arr[1]
+                else:
+                    self.prompt.to_return = "Error: border style not found."
         elif(e_arr[0] == "export"):
             if(len(event.value) <= 7):
                 self.prompt.to_return = "Error: please specify an output file."
