@@ -9,7 +9,9 @@ from textual.color import Color
 
 import json
 import os
+import subprocess
 from shell import shell
+import random
 
 c_file = open("config.json")
 config = json.load(c_file)
@@ -58,12 +60,19 @@ def parse_uptime():
         cputime = uptime-int(float(data[1]))
         return str(uptime),str(cputime)
 
+def parse_storage():
+    proc = subprocess.Popen("df",stdout=subprocess.PIPE)
+    output = proc.stdout.read().decode("utf-8").split("\n")
+    output = output[2].replace("	","")
+    output = output.split(" ")[3]
+    return str(output)
+
 class SysInfo(Widget):
     cpu = reactive(parse_cpu())
     memory = reactive(parse_mem())
     uptime = reactive(parse_uptime()[0])
     cputime = reactive(parse_uptime()[1])
-
+    storage = reactive(parse_storage())
     retval = reactive("")
 
     def fetchinfo(self):
@@ -71,6 +80,7 @@ class SysInfo(Widget):
         self.memory = parse_mem()
         self.uptime = parse_uptime()[0]
         self.cputime = parse_uptime()[1]
+        self.storage = parse_storage()
 
     def on_mount(self):
         self.set_interval(1.0,self.fetchinfo)
@@ -78,13 +88,46 @@ class SysInfo(Widget):
     def comp(self):
         self.retval = "System info:\n"
         self.retval+=str(self.cpu)+" MHz CPU\n"
-        self.retval+=str(self.memory)+" KB in use\n"
+        self.retval+=str(self.memory)+" KB memory in use\n"
+        self.retval+=str(self.storage)+" KB storage available\n"
         self.retval+="Uptime: "+str(self.uptime)+" s\n"
         self.retval+="CPU time: "+str(self.cputime)+" s\n"
 
     def render(self) -> str:
         self.comp()
         return self.retval
+
+class Drop(Widget):
+    posx = []
+    posy = []
+
+    def update(self):
+        if(random.randint(0,1)):
+            if(len(self.posx) < 5):
+                self.posx.append(random.randint(0,self.container_size[0]-1))
+                self.posy.append(0)
+        i = 0
+        while(i < len(self.posx)):
+            self.posy[i]+=1
+            if(self.posy[i] == self.container_size[1]):
+                self.posx.pop(i)
+                self.posy.pop(i)
+                i-=1
+            i+=1
+
+    def on_mount(self):
+        self.set_interval(.5,self.update)
+
+    def render(self) -> str:
+        ret = ""
+        for i in range(self.container_size[1]):
+            tmp = " "*(self.container_size[0]-1)
+            if(i in self.posy):
+                xind = self.posx[self.posy.index(i)]
+                tmp[xind] = "*"
+            tmp+="\n"
+            ret+=tmp
+        return ret
 
 class FileTree(Widget):
     dtree = reactive(DirectoryTree(os.getcwd()))
@@ -107,13 +150,16 @@ class PyTerm(App):
     buffer = ""
     prompt = Prompt(id="prompt")
     sysinfo = SysInfo(id="sys")
+    switcher1 = ContentSwitcher(initial="drop")
     switcher2 = ContentSwitcher(initial="dtree")
     tree = Container(DirectoryTree(os.getcwd()),id="dtree")
-
+    drop = Drop(id="drop")
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        yield self.sysinfo
+        with self.switcher1:
+            yield self.drop
+            yield self.sysinfo
         with self.switcher2:
             yield self.tree
             #yield Static()
@@ -146,18 +192,20 @@ class PyTerm(App):
                 self.exit()
         elif(e_arr[0] == "theme"):
             try:
-                Color.parse(event.value[6:])
+                Color.parse(e_arr[1])
                 self.settings["theme"] = event.value[6:]
+                self.prompt.to_return = "Successfully updated settings."
             except:
                 self.prompt.to_return = "Error: color not found."
         elif(e_arr[0] == "border"):
-            options = ["ascii","blank","dashed","double","heavy","hidden/none","hkey",
+            options = ["ascii","blank","dashed","double","heavy","hidden", "none","hkey",
                 "inner","outer","round","solid","tall","thick","vkey","wide"]
             if(e_arr[1] == ""):
-               self.prompt.to_return = "Available borders styles: "+", ".join(options)+"."
+                self.prompt.to_return = "Available borders styles: "+", ".join(options)+"."
             else:
                 if(e_arr[1] in options):
                     self.settings["border"] = e_arr[1]
+                    self.prompt.to_return = "Successfully updated settings."
                 else:
                     self.prompt.to_return = "Error: border style not found."
         elif(e_arr[0] == "export"):
@@ -165,7 +213,16 @@ class PyTerm(App):
                 self.prompt.to_return = "Error: please specify an output file."
             else:
                 self.export_settings(event.value[7:])
-                self.prompt.to_return = "Succesfully wrote settings to \""+event.value[7:]+"\"."
+                self.prompt.to_return = "Successfully wrote settings to \""+event.value[7:]+"\"."
+        elif(e_arr[0] == "autofill"):
+            if(e_arr[1].lower() not in ["true","false"]):
+                self.prompt.to_return = "Error: invalid value."
+            else:
+                if(e_arr[1].lower() == "true"):
+                    self.settings["autofill"] = True
+                else:
+                    self.settings["autofill"] = False
+                self.prompt.to_return = "Successfully updated settings."
         # if(event.value[:2] == "ls"):
         #     self.cwd = os.getcwd()
         #     self.query_one(ContentSwitcher).current = "dtree"
