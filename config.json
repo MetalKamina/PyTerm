@@ -1,1 +1,1 @@
-{"theme": "green", "default_widgets": ["sysinfo", "filetree"], "autofill": true, "border":"solid"}
+{"theme": "green", "default_widgets": ["sys", "filetree"], "autofill": true, "border": "double"}

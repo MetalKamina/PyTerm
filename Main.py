@@ -12,6 +12,7 @@ import os
 import subprocess
 from shell import shell
 import random
+import sys
 
 c_file = open("config.json")
 config = json.load(c_file)
@@ -97,46 +98,58 @@ class SysInfo(Widget):
         self.comp()
         return self.retval
 
-class Drop(Widget):
-    posx = []
-    posy = []
+class Logo(Widget):
+    string = reactive("")
+    def render(self) -> str:
+        return self.string
+
+class Snow(Widget):
+    posx = reactive([])
+    posy = reactive([])
+    retval = reactive("")
 
     def update(self):
-        if(random.randint(0,1)):
-            if(len(self.posx) < 5):
-                self.posx.append(random.randint(0,self.container_size[0]-1))
-                self.posy.append(0)
-        i = 0
-        while(i < len(self.posx)):
-            self.posy[i]+=1
-            if(self.posy[i] == self.container_size[1]):
-                self.posx.pop(i)
-                self.posy.pop(i)
-                i-=1
-            i+=1
+        try:
+            if(random.randint(0,1)):
+                if(len(self.posx) < 10):
+                    self.posx.append(random.randint(0,self.container_size[0]-1))
+                    self.posy.append(0)
+            i = 0
+            while(i < len(self.posx)):
+                self.posy[i]+=1
+                if(self.posy[i] == self.container_size[1]):
+                    self.posx.pop(i)
+                    self.posy.pop(i)
+                    i-=1
+                i+=1
+
+            self.retval = ""
+            for i in range(self.container_size[1]):
+                tmp = " "*(self.container_size[0])
+                if(i in self.posy):
+                    xind = self.posx[self.posy.index(i)]
+                    tmp = [x for x in tmp]
+                    tmp[xind] = "*"
+                    tmp = "".join(tmp)
+                tmp+="\n"
+                self.retval+=tmp
+        except:
+            pass
 
     def on_mount(self):
-        self.set_interval(.5,self.update)
+        self.set_interval(.25,self.update)
 
     def render(self) -> str:
-        ret = ""
-        for i in range(self.container_size[1]):
-            tmp = " "*(self.container_size[0]-1)
-            if(i in self.posy):
-                xind = self.posx[self.posy.index(i)]
-                tmp[xind] = "*"
-            tmp+="\n"
-            ret+=tmp
-        return ret
+        return self.retval
 
 class FileTree(Widget):
-    dtree = reactive(DirectoryTree(os.getcwd()))
+    filetree = reactive(DirectoryTree(os.getcwd()))
 
     def compose(self) -> ComposeResult:
-        yield self.dtree
+        yield self.filetree
 
     def update_tree(self):
-       self.dtree = reactive(DirectoryTree(os.getcwd()))
+       self.filetree = reactive(DirectoryTree(os.getcwd()))
 
 class PyTerm(App):
     CSS_PATH="styles.css"
@@ -150,31 +163,30 @@ class PyTerm(App):
     buffer = ""
     prompt = Prompt(id="prompt")
     sysinfo = SysInfo(id="sys")
-    switcher1 = ContentSwitcher(initial="drop")
-    switcher2 = ContentSwitcher(initial="dtree")
-    tree = Container(DirectoryTree(os.getcwd()),id="dtree")
-    drop = Drop(id="drop")
+    switcher1 = ContentSwitcher(initial=settings["default_widgets"][0])
+    switcher2 = ContentSwitcher(initial=settings["default_widgets"][1])
+    tree = Container(DirectoryTree(os.getcwd()),id="filetree")
+    snow = Snow(id="snow")
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         with self.switcher1:
-            yield self.drop
+            yield self.snow
             yield self.sysinfo
         with self.switcher2:
             yield self.tree
-            #yield Static()
         yield self.prompt
         yield self._in
 
     def update_s(self):
-        self.sysinfo.styles.border = (self.settings["border"],self.settings["theme"])
+        self.switcher1.styles.border = (self.settings["border"],self.settings["theme"])
         self.prompt.styles.border = (self.settings["border"],self.settings["theme"])
         self._in.styles.border = (self.settings["border"],self.settings["theme"])
         self.switcher2.styles.border = (self.settings["border"],self.settings["theme"])
 
     def update_tree(self):
-        self.query_one("#dtree > DirectoryTree").remove()
-        self.query_one("#dtree").mount(DirectoryTree(os.getcwd()))
+        self.query_one("#filetree > DirectoryTree").remove()
+        self.query_one("#filetree").mount(DirectoryTree(os.getcwd()))
 
     def export_settings(self,filename):
         j = json.dumps(self.settings)
@@ -197,6 +209,22 @@ class PyTerm(App):
                 self.prompt.to_return = "Successfully updated settings."
             except:
                 self.prompt.to_return = "Error: color not found."
+        elif(e_arr[0] == "content"):
+            contents = ["filetree","snow","sys"]
+            try:
+                if(e_arr[2] in contents):
+                    num = int(e_arr[1])
+                    if(num == 1):
+                        self.switcher1.current = e_arr[2]
+                        self.settings["default_widgets"][0] = e_arr[2]
+                    else:
+                        self.switcher2.current = e_arr[2]
+                        self.settings["default_widgets"][1] = e_arr[2]
+                    self.prompt.to_return = "Successfully updated settings."
+                else:
+                    self.prompt.to_return = "Error: content not found. Select content from the following:\n"+",".join(contents)
+            except:
+                self.prompt.to_return = "Error: select a valid pane/content combo.\nFormat: content [content pane number] [content name]"
         elif(e_arr[0] == "border"):
             options = ["ascii","blank","dashed","double","heavy","hidden", "none","hkey",
                 "inner","outer","round","solid","tall","thick","vkey","wide"]
@@ -225,7 +253,7 @@ class PyTerm(App):
                 self.prompt.to_return = "Successfully updated settings."
         # if(event.value[:2] == "ls"):
         #     self.cwd = os.getcwd()
-        #     self.query_one(ContentSwitcher).current = "dtree"
+        #     self.query_one(ContentSwitcher).current = "filetree"
         else:
             #self.query_one(ContentSwitcher).current = "prompt"
             self.prompt.update(event.value)

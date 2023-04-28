@@ -20,9 +20,3 @@ Prompt {
     border: solid green;
     column-span: 2;
 }
-
-SysInfo {
-    /*height:50%;
-    width:50%;*/
-    border: solid green;
-}
